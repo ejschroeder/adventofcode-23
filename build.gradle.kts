@@ -10,7 +10,10 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.6")
+
     testImplementation(kotlin("test"))
+    testImplementation("io.strikt:strikt-core:0.34.1")
 }
 
 tasks.test {
@@ -18,5 +21,5 @@ tasks.test {
 }
 
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain(17)
 }
