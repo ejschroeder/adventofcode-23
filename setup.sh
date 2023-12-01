@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CONFIG_FILE=./setup.config
+CONFIG_FILE=./setup.config.env
 
 if [[ -f "$CONFIG_FILE" ]]; then
   source "$CONFIG_FILE"
