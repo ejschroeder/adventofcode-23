@@ -1,12 +1,12 @@
 package lol.schroeder.aoc23
 
-fun main() {
-    fun part1(input: List<String>): Int {
+class Day01(private val input: List<String>) : Day() {
+    override fun part1(): Any {
         return input.map { line -> line.first(Char::isDigit).toString() + line.last(Char::isDigit) }
             .sumOf { it.toInt() }
     }
 
-    fun part2(input: List<String>): Int {
+    override fun part2(): Any {
         val nums = mapOf(
             "1" to "1",
             "2" to "2",
@@ -34,10 +34,6 @@ fun main() {
             nums[first] + nums[last]
         }.sumOf { it.toInt() }
     }
-
-    val input = readInputLines("day01")
-
-    println("::: Day01 :::")
-    println("Part 1: ${part1(input)}")
-    println("Part 2: ${part2(input)}")
 }
+
+fun main() = Day01(readInputLines("day01")).solve()

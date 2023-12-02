@@ -14,6 +14,7 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("io.strikt:strikt-core:0.34.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
 }
 
 tasks.test {
