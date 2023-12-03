@@ -5,10 +5,10 @@ class Day03(private val input: List<String>) : Day() {
     override fun part1(): Any {
         val schematic = Schematic(input)
 
-        val symbols = schematic.symbols.associateBy { SchematicIndex(it.row, it.col) }
+        val symbolIndexes = schematic.symbols.map { SchematicIndex(it.row, it.col) }.toHashSet()
 
         return schematic.numbers
-            .filter { it.surroundingCells().any(symbols::containsKey) }
+            .filter { it.surroundingCells().any(symbolIndexes::contains) }
             .sumOf { it.value }
     }
 
@@ -25,7 +25,6 @@ class Day03(private val input: List<String>) : Day() {
             .filter { it.size == 2 }
             .sumOf { it.first().value * it.last().value }
     }
-
 
     data class SchematicIndex(val row: Int, val col: Int)
     data class PartNumber(val value: Int, val row: Int, val cols: IntRange) {
@@ -58,7 +57,9 @@ class Day03(private val input: List<String>) : Day() {
         }
 
         if (!remainingLine.first().isDigit()) {
-            return extractNumbers(remainingLine.drop(1), currentRow, currentCol + 1, partNumbers)
+            val trimmedLine = remainingLine.dropWhile { !it.isDigit() }
+            val skipped = remainingLine.length - trimmedLine.length
+            return extractNumbers(trimmedLine, currentRow, currentCol + skipped, partNumbers)
         }
 
         val num = remainingLine.takeWhile { it.isDigit() }
