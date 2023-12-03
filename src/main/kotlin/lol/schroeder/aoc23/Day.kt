@@ -10,10 +10,10 @@ abstract class Day {
         println("::: ${this::class.simpleName} :::")
         measureNanoTime {
             println("Part 1: ${part1()}")
-        }.also { println("=> $it ns") }
+        }.also { println("=> ⏱️ $it ns") }
 
         measureNanoTime {
             println("Part 2: ${part2()}")
-        }.also { println("=> $it ns") }
+        }.also { println("=> ⏱️ $it ns") }
     }
 }
