@@ -2,7 +2,7 @@ package lol.schroeder.aoc23
 
 import kotlin.math.pow
 
-class Day04(private val input: List<String>) : Day() {
+class Day04(private val input: List<String> = readInputLines("day04")) : Day() {
     override fun part1(): Any {
         return input.map { it.substringAfter(": ").split(" | ") }
             .mapIndexed { idx, groups -> ScratchCard(idx, groups.first().extractInts().toSet(), groups.last().extractInts()) }
@@ -39,4 +39,4 @@ class Day04(private val input: List<String>) : Day() {
     }
 }
 
-fun main() = Day04(readInputLines("day04")).solve()
+fun main() = Day04().solve()

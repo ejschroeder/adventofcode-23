@@ -4,7 +4,7 @@ import kotlin.math.min
 
 typealias Almanac = Map<String, Day05.AlmanacMap>
 
-class Day05(private val input: List<String>) : Day() {
+class Day05(private val input: List<String> = readInputLines("day05")) : Day() {
 
     override fun part1(): Any {
         val seeds = input.first()
@@ -85,4 +85,4 @@ class Day05(private val input: List<String>) : Day() {
     }
 }
 
-fun main() = Day05(readInputLines("day05")).solve()
+fun main() = Day05().solve()

@@ -2,7 +2,7 @@ package lol.schroeder.aoc23
 
 import java.util.regex.Pattern
 
-class Day02(private val input: List<String>) : Day() {
+class Day02(private val input: List<String> = readInputLines("day02")) : Day() {
 
     private fun isValidPull(pull: Pair<String, Int>): Boolean {
         return pull.first == "red" && pull.second <= 12
@@ -39,4 +39,4 @@ class Day02(private val input: List<String>) : Day() {
     }
 }
 
-fun main() = Day02(readInputLines("day02")).solve()
+fun main() = Day02().solve()

@@ -1,6 +1,6 @@
 package lol.schroeder.aoc23
 
-class Day01(private val input: List<String>) : Day() {
+class Day01(private val input: List<String> = readInputLines("day01")) : Day() {
     override fun part1(): Any {
         return input.map { line -> line.first(Char::isDigit).toString() + line.last(Char::isDigit) }
             .sumOf { it.toInt() }
@@ -36,4 +36,4 @@ class Day01(private val input: List<String>) : Day() {
     }
 }
 
-fun main() = Day01(readInputLines("day01")).solve()
+fun main() = Day01().solve()

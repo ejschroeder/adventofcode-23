@@ -1,6 +1,6 @@
 package lol.schroeder.aoc23
 
-class Day03(private val input: List<String>) : Day() {
+class Day03(private val input: List<String> = readInputLines("day03")) : Day() {
 
     override fun part1(): Any {
         val schematic = Schematic(input)
@@ -69,4 +69,4 @@ class Day03(private val input: List<String>) : Day() {
     }
 }
 
-fun main() = Day03(readInputLines("day03")).solve()
+fun main() = Day03().solve()
