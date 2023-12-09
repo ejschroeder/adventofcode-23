@@ -12,8 +12,8 @@ class Day08(private val input: List<String> = readInputLines("day08")) : Day() {
     override fun part1(): Any {
         val (instructions, nodes) = parseInput()
 
-        return generateSequence { instructions.asIterable() }
-            .flatten()
+        return instructions.asIterable()
+            .cycle()
             .runningFold("AAA", nextNode(nodes))
             .takeWhile { it != "ZZZ" }
             .count()

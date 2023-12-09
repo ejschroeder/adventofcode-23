@@ -147,3 +147,16 @@ fun <T> List<T>.splitOn(predicate: (T) -> Boolean): Sequence<List<T>> {
         yield(group)
     }
 }
+
+fun <T> Iterable<T>.cycle() = sequence {
+    var iterator = iterator()
+
+    if (!iterator.hasNext()) return@sequence
+
+    while (true) {
+        yield(iterator.next())
+
+        if (!iterator.hasNext())
+            iterator = iterator()
+    }
+}
