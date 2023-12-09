@@ -1,88 +1,81 @@
 package lol.schroeder.aoc23
 
+import kotlin.math.max
+
 class Day08(private val input: List<String> = readInputLines("day08")) : Day() {
+    data class DesertMap(val instructions: String, val nodes: Map<String, Node>)
     data class Node(val id: String, val leftDestination: String, val rightDestination: String)
-
-    override fun part1(): Any {
-        val instructions = input.first()
-        val nodes = input.drop(2)
-            .map { it.mapGroups("([A-Z]+) = \\(([A-Z]+), ([A-Z]+)\\)") { (source, left, right) -> Node(source, left, right) } }
-            .associateBy { it.id }
-
-        val steps = generateSequence { instructions.asIterable() }.flatten().runningFold("AAA") { acc, instr ->
-            if (instr == 'L') nodes.getValue(acc).leftDestination else nodes.getValue(acc).rightDestination
-        }.takeWhile { it != "ZZZ" }.toList()
-
-        return steps.count()
-    }
-
+    data class Cycle(val period: Long, val offsets: List<Long>)
     data class State(val idx: Int, val node: String)
-
     data class StepState(val location: Long, val stepSize: Long)
 
+    override fun part1(): Any {
+        val (instructions, nodes) = parseInput()
+
+        return generateSequence { instructions.asIterable() }
+            .flatten()
+            .runningFold("AAA", nextNode(nodes))
+            .takeWhile { it != "ZZZ" }
+            .count()
+    }
+
     override fun part2(): Any {
-        val instructions = input.first()
-        val nodes = input.drop(2)
-            .map { it.mapGroups("([A-Z1-9]+) = \\(([A-Z1-9]+), ([A-Z1-9]+)\\)") { (source, left, right) -> Node(source, left, right) } }
-            .associateBy { it.id }
+        val map = parseInput()
 
-        val startingNodes = nodes.keys.filter { it.endsWith('A') }
-
-        val cycles = startingNodes.map { findCycle(it, instructions, nodes) }
-
-        val finalState = cycles.fold(StepState(0, 1)) { state, cycle ->
-            val zOffset = cycle.zOffset.last()
-            val firstOccurrence = generateSequence(state.location + state.stepSize) { it + state.stepSize }
-                .first { (it + zOffset + cycle.offset).rem(cycle.period) == 0L }
-            StepState(firstOccurrence, lcm(state.stepSize, cycle.period))
-        }
-
-        return finalState.location
+        return map.nodes.keys
+            .filter { it.endsWith('A') }
+            .map { findCycleRecursive(State(0, it), map) }
+            .fold(StepState(0, 1), ::findNextExitNode)
+            .location
     }
 
-    fun lcm(a: Long, b: Long): Long {
-        val larger = if (a > b) a else b
-        val maxLcm = a * b
-        var lcm = larger
-        while (lcm <= maxLcm) {
-            if (lcm % a == 0L && lcm % b == 0L) {
-                return lcm
-            }
-            lcm += larger
-        }
-        return maxLcm
+    private fun nextNode(nodes: Map<String, Node>) = { node: String, instr: Char ->
+        if (instr == 'L') nodes.getValue(node).leftDestination
+        else nodes.getValue(node).rightDestination
     }
 
-    data class Cycle(val period: Long, val offset: Int, val zOffset: List<Int>)
+    private fun findNextExitNode(state: StepState, cycle: Cycle): StepState {
+        // Sample has multiple exit nodes in a cycle, but real data does not.
+        // Taking the last works, but is probably wrong
+        val offset = cycle.offsets.last()
+        val nextMatchingExitNode = generateSequence(state.location + state.stepSize) { it + state.stepSize }
+            .first { (it + offset).rem(cycle.period) == 0L }
+        return StepState(nextMatchingExitNode, lcm(state.stepSize, cycle.period))
+    }
 
-    fun findCycle(start: String, instructions: String, nodes: Map<String, Node>): Cycle {
-        val seen = mutableSetOf<State>()
-        var iter = 0
-        var currentState = State(0, start)
-        while (currentState !in seen) {
-            val idx = iter % instructions.length
-            seen.add(currentState)
-            val instruction = instructions[idx]
-
-            val newNode = if (instruction == 'L')
-                nodes.getValue(currentState.node).leftDestination
-            else
-                nodes.getValue(currentState.node).rightDestination
-
-            iter++
-            val newIdx = if (idx == instructions.lastIndex) 0 else idx + 1
-            currentState = State(newIdx, newNode)
+    private tailrec fun findCycleRecursive(state: State, map: DesertMap, seen: MutableSet<State> = mutableSetOf()): Cycle {
+        if (state in seen) {
+            return seenToCycle(seen, state)
         }
 
-        val seenStates = seen.toList()
-        val startOffset = seenStates.indexOf(currentState)
+        val instruction = map.instructions[state.idx]
+        val newNode = nextNode(map.nodes)(state.node, instruction)
+        val newIdx = if (state.idx == map.instructions.lastIndex) 0 else state.idx + 1
+        seen.add(state)
+        return findCycleRecursive(State(newIdx, newNode), map, seen)
+    }
 
-        val cycle = seenStates.drop(startOffset)
+    private fun seenToCycle(seen: MutableSet<State>, state: State): Cycle {
+        val startOffset = seen.indexOf(state)
+
+        val cycle = seen.drop(startOffset)
         val offsets = cycle.withIndex()
             .filter { it.value.node.endsWith('Z') }
-            .map { it.index }
+            .map { it.index + startOffset.toLong() }
 
-        return Cycle(cycle.size.toLong(), startOffset, offsets)
+        return Cycle(cycle.size.toLong(), offsets)
+    }
+
+    private fun parseInput(): DesertMap {
+        val instructions = input.first()
+        val nodes = input.drop(2)
+            .map {
+                it.mapGroups("([A-Z]+) = \\(([A-Z]+), ([A-Z]+)\\)") { (source, left, right) ->
+                    Node(source, left, right)
+                }
+            }
+            .associateBy { it.id }
+        return DesertMap(instructions, nodes)
     }
 }
 

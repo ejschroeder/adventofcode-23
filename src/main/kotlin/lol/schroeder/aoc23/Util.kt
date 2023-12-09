@@ -35,6 +35,19 @@ fun lcm(a: Int, b: Int): Int {
     return a / gcd(a, b) * b
 }
 
+fun lcm(a: Long, b: Long): Long {
+    val larger = max(a, b)
+    val maxLcm = a * b
+    var lcm = larger
+    while (lcm <= maxLcm) {
+        if (lcm % a == 0L && lcm % b == 0L) {
+            return lcm
+        }
+        lcm += larger
+    }
+    return maxLcm
+}
+
 operator fun IntRange.contains(other: IntRange) = first <= other.first && last >= other.last
 infix fun IntRange.overlaps(other: IntRange) = first <= other.last && last >= other.first
 fun IntRange.merge(other: IntRange): IntRange? {
