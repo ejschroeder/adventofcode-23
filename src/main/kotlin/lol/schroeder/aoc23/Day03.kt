@@ -65,7 +65,7 @@ class Day03(private val input: List<String> = readInputLines("day03")) : Day() {
         val num = remainingLine.takeWhile { it.isDigit() }
         val nextCol = currentCol + num.length
         val newPartNumber = PartNumber(num.toInt(), currentRow, currentCol..<nextCol)
-        return extractNumbers(remainingLine.substring(num.length), currentRow,  nextCol,partNumbers + newPartNumber)
+        return extractNumbers(remainingLine.substring(num.length), currentRow, nextCol, partNumbers + newPartNumber)
     }
 }
 
