@@ -1,6 +1,118 @@
 package lol.schroeder.aoc23
 
 class Day10(private val input: List<String> = readInputLines("day10")) : Day() {
+
+    override fun part1(): Any {
+        val tileMap = TileMap(input.flatMap { it.asIterable() }, input.first().length)
+
+        val start = tileMap.find('S')
+        val distances = tileMap.getDistancesFrom(start)
+
+        return distances.values.max()
+    }
+
+    override fun part2(): Any {
+        val tileMap = TileMap(input.flatMap { it.asIterable() }, input.first().length)
+
+        val start = tileMap.find('S')
+
+        return tileMap.countContainedTiles(start)
+    }
+
+    data class TileMap(val tiles: List<Char>, val width: Int) {
+        private val rows = 0..<height
+        private val cols = 0..<width
+        private val height get() = tiles.size / width
+        private val graph = buildGraph()
+
+        init { require(width * height == tiles.size) { "Width does not match size: $width * $height != ${tiles.size}" } }
+
+        fun getDistancesFrom(coordinate: Coordinate): Map<Coordinate, Int> {
+            val queue = ArrayDeque<Coordinate>().apply { add(coordinate) }
+            val distances = mutableMapOf<Coordinate, Int>()
+                .withDefault { Integer.MAX_VALUE }.apply { put(coordinate, 0) }
+            return calculateDistances(graph, queue, distances)
+        }
+
+        fun countContainedTiles(loopStart: Coordinate): Int {
+            val loop = getDistancesFrom(loopStart).keys
+            return tiles.indices
+                .map { coordinateOf(it) }
+                .filter { it !in loop }
+                .count { isCoordinateInsideLoop(it, loop) }
+        }
+
+        private fun isCoordinateInsideLoop(coordinate: Coordinate, loop: Set<Coordinate>): Boolean {
+            return (coordinate.col..cols.last).count { col ->
+                val coord = Coordinate(coordinate.row, col)
+                val tile = this[coord]
+                // ignores 'S', and will miscount if 'S' is 'L' or 'J'
+                coord in loop && (tile == 'L' || tile == 'J' || tile == '|')
+            }.isOdd()
+        }
+
+        private tailrec fun calculateDistances(graph: Map<Coordinate, List<Coordinate>>, queue: ArrayDeque<Coordinate>, distances: MutableMap<Coordinate, Int>): Map<Coordinate, Int> {
+            if (queue.isEmpty()) return distances
+
+            val coordinate = queue.removeFirst()
+            val distanceToNext = distances.getValue(coordinate) + 1
+
+            val neighbors = graph.getValue(coordinate)
+            neighbors.filter { distances.getValue(it) > distanceToNext }.forEach {
+                queue.add(it)
+                distances[it] = distanceToNext
+            }
+
+            return calculateDistances(graph, queue, distances)
+        }
+
+        private fun buildGraph() = tiles.withIndex()
+            .filter { it.value != '.' }
+            .map { coordinateOf(it.index) }
+            .associateWith { getValidNeighborsForTile(it) }
+
+        private fun getValidNeighborsForTile(coordinate: Coordinate) = get(coordinate)
+            .getNeighborDirections()
+            .map { it to it.from(coordinate) }
+            .filter { (_, neighbor) -> neighbor in this }
+            .filter { (direction, neighborCoordinate) ->
+                val neighbor = this[neighborCoordinate]
+                neighbor != '.' && direction.opposingDirection() in neighbor.getNeighborDirections()
+            }
+            .map { it.second }
+
+        fun find(char: Char) = coordinateOf(tiles.indexOf(char))
+        fun coordinateOf(index: Int) = Coordinate(index / width, index % width)
+        fun indexOf(coordinate: Coordinate) = coordinate.row * width + coordinate.col
+        operator fun get(coordinate: Coordinate) = tiles[indexOf(coordinate)]
+        operator fun contains(coordinate: Coordinate) = coordinate.row in rows && coordinate.col in cols
+
+        override fun toString(): String {
+            return rows.joinToString("\n") { row -> cols.joinToString("") { col -> get(Coordinate(row, col)).toBorder() } }
+        }
+
+        private fun Char.getNeighborDirections() = when (this) {
+            '|' -> listOf(Direction.NORTH, Direction.SOUTH)
+            '-' -> listOf(Direction.EAST, Direction.WEST)
+            'L' -> listOf(Direction.NORTH, Direction.EAST)
+            'J' -> listOf(Direction.NORTH, Direction.WEST)
+            '7' -> listOf(Direction.SOUTH, Direction.WEST)
+            'F' -> listOf(Direction.EAST, Direction.SOUTH)
+            'S' -> listOf(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)
+            else -> listOf()
+        }
+
+        private fun Char.toBorder() = when (this) {
+            '|' -> "┃"
+            '-' -> "━"
+            'L' -> "┗"
+            'J' -> "┛"
+            '7' -> "┓"
+            'F' -> "┏"
+            else -> "$this"
+        }
+    }
+
     data class Coordinate(val row: Int, val col: Int)
 
     enum class Direction(private val rowOffset: Int, private val colOffset: Int) {
@@ -16,150 +128,6 @@ class Day10(private val input: List<String> = readInputLines("day10")) : Day() {
             SOUTH -> NORTH
             WEST -> EAST
         }
-    }
-
-    private fun Char.getNeighborDirections() = when (this) {
-        '|' -> listOf(Direction.NORTH, Direction.SOUTH)
-        '-' -> listOf(Direction.EAST, Direction.WEST)
-        'L' -> listOf(Direction.NORTH, Direction.EAST)
-        'J' -> listOf(Direction.NORTH, Direction.WEST)
-        '7' -> listOf(Direction.SOUTH, Direction.WEST)
-        'F' -> listOf(Direction.EAST, Direction.SOUTH)
-        'S' -> listOf(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)
-        else -> throw IllegalStateException("Looking for neighbors of a non-pipe tile '$this'")
-    }
-
-    // ┓┃┛━┏┗
-
-    private fun Char.toBorder() = when (this) {
-        '|' -> "┃"
-        '-' -> "━"
-        'L' -> "┗"
-        'J' -> "┛"
-        '7' -> "┓"
-        'F' -> "┏"
-        else -> "$this"
-    }
-
-    override fun part1(): Any {
-        val width = input.first().indices
-        val height = input.indices
-
-        val graph = input.flatMapIndexed { row, line ->
-            line.withIndex().filter { it.value != '.' }.map { (col, cell) ->
-                val coord = Coordinate(row, col)
-                val validNeighbors = cell.getNeighborDirections()
-                    .map { it to it.from(coord) }
-                    .filter { (_, neighbor) -> neighbor.col in width && neighbor.row in height }
-                    .filter { (direction, neighbor) ->
-                        val neighborPipe = input[neighbor.row][neighbor.col]
-                        neighborPipe != '.' && direction.opposingDirection() in neighborPipe.getNeighborDirections() }
-                    .map { it.second }
-                coord to validNeighbors
-            }
-        }.toMap()
-
-        val startRow = input.indexOfFirst { it.contains('S') }
-        val startCol = input[startRow].indexOfFirst { it == 'S' }
-
-        return findDistances(Coordinate(startRow, startCol), graph).values.max()
-    }
-
-    override fun part2(): Any {
-        val width = input.first().indices
-        val height = input.indices
-
-        val graph = input.flatMapIndexed { row, line ->
-            line.withIndex().filter { it.value != '.' }.map { (col, cell) ->
-                val coord = Coordinate(row, col)
-                val validNeighbors = cell.getNeighborDirections()
-                    .map { it to it.from(coord) }
-                    .filter { (_, neighbor) -> neighbor.col in width && neighbor.row in height }
-                    .filter { (direction, neighbor) ->
-                        val neighborPipe = input[neighbor.row][neighbor.col]
-                        neighborPipe != '.' && direction.opposingDirection() in neighborPipe.getNeighborDirections() }
-                    .map { it.second }
-                coord to validNeighbors
-            }
-        }.toMap()
-
-        val startRow = input.indexOfFirst { it.contains('S') }
-        val startCol = input[startRow].indexOfFirst { it == 'S' }
-
-        val loopNodes = findDistances(Coordinate(startRow, startCol), graph).keys
-
-        val contained = input.flatMapIndexed { row, line ->
-            line.indices
-                .filter { Coordinate(row, it) !in loopNodes }
-                .filter { col -> coordinateWithinLoop(Coordinate(row, col), line, loopNodes) }
-                .map { Coordinate(row, it) }
-        }.toSet()
-
-//        printMap(loopNodes, contained)
-
-        return input.withIndex().sumOf { (row, line) ->
-            line.indices.count { col -> Coordinate(row, col)  in contained}
-        }
-    }
-
-    private fun printMap(loopNodes: Set<Coordinate>, contained: Set<Coordinate>) {
-        input.forEachIndexed { row, line ->
-            print(row.toString().padStart(3) + ": ")
-            line.forEachIndexed { col, c ->
-                if (Coordinate(row, col) in loopNodes)
-                    print(c.toBorder())
-                else if (Coordinate(row, col) in contained)
-                    print("\u001B[31m@\u001B[0m")
-                else
-                    print(".")
-            }
-            println()
-        }
-    }
-
-    fun coordinateWithinLoop(coordinate: Coordinate, line: String, loopNodes: Set<Coordinate>): Boolean {
-        var inHorizontalLine = false
-        var horizontalStart: Char? = null
-        var count = 0
-        for (col in coordinate.col..line.lastIndex) {
-            val nextCoord = Coordinate(coordinate.row, col)
-            val isLoopNode = nextCoord in loopNodes
-            if (isLoopNode && inHorizontalLine && (line[col] == '7' || line[col] == 'J' || (line[col] == 'S' && line[col + 1] != '-') )) {
-                inHorizontalLine = false
-                when {
-                    horizontalStart == 'F' && line[col] == 'J' -> count++
-                    horizontalStart == 'L' && line[col] == '7' -> count++
-                }
-            } else if (isLoopNode && !inHorizontalLine && (line[col] == 'F' || line[col] == 'L' || (line[col] == 'S' && line[col + 1] == '-' ) )) {
-                inHorizontalLine = true
-                horizontalStart = line[col]
-            } else if (isLoopNode && !inHorizontalLine) {
-                count++
-            }
-        }
-        return count != 0 && count.isOdd()
-    }
-
-    fun findDistances(start: Coordinate, graph: Map<Coordinate, List<Coordinate>>): Map<Coordinate, Int> {
-        val distances = mutableMapOf<Coordinate, Int>().withDefault { Integer.MAX_VALUE }
-        val queue = ArrayDeque<Coordinate>()
-
-        queue.add(start)
-        distances[start] = 0
-        while (queue.isNotEmpty()) {
-            val currentCoord = queue.removeFirst()
-            val distanceToNext = distances.getValue(currentCoord) + 1
-
-            val neighbors = graph.getValue(currentCoord)
-            neighbors.forEach {
-                val neighborDistance = distances.getValue(it)
-                if (neighborDistance > distanceToNext) {
-                    distances[it] = distanceToNext
-                    queue.add(it)
-                }
-            }
-        }
-        return distances
     }
 }
 
