@@ -148,6 +148,10 @@ fun <T> List<T>.splitOn(predicate: (T) -> Boolean): Sequence<List<T>> {
     }
 }
 
+fun <T> List<List<T>>.transpose(): List<List<T>> {
+    return (this[0].indices).map { i -> (this.indices).map { j -> this[j][i] } }
+}
+
 fun <T> Iterable<T>.cycle() = sequence {
     var iterator = iterator()
 
