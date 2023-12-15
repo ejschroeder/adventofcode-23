@@ -43,8 +43,7 @@ class Day14Test {
             #OO..#....
         """.trimIndent().lines()
 
-        val day = Day14(input)
-        val result = day.part2()
+        val result = Day14(input).part2()
 
         expectThat(result) isEqualTo 64
     }
