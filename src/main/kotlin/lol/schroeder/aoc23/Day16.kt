@@ -41,7 +41,24 @@ class Day16(private val input: List<String> = readInputLines("day16")) : Day() {
     override fun part1(): Any {
         val grid = input.map { it.toList() }
 
-        val queue = ArrayDeque<Laser>().apply { add(Laser(0,0, Dir.RIGHT)) }
+        return countEnergizedTiles(grid, Laser(0, 0, Dir.RIGHT))
+    }
+
+    override fun part2(): Any {
+        val grid = input.map { it.toList() }
+
+        val startingPoints = listOf(
+            grid.indices.map { Laser(it, 0, Dir.RIGHT) },
+            grid.indices.map { Laser(it, grid[it].lastIndex, Dir.LEFT) },
+            grid[0].indices.map { Laser(0, it, Dir.DOWN) },
+            grid[0].indices.map { Laser(grid.lastIndex, it, Dir.UP) }
+        ).flatten()
+
+        return startingPoints.maxOf { countEnergizedTiles(grid, it) }
+    }
+
+    private fun countEnergizedTiles(grid: List<List<Char>>, start: Laser): Int {
+        val queue = ArrayDeque<Laser>().apply { add(start) }
         val seen = hashSetOf<Laser>()
         while (queue.isNotEmpty()) {
             val laser = queue.removeFirst()
@@ -54,10 +71,6 @@ class Day16(private val input: List<String> = readInputLines("day16")) : Day() {
         }
 
         return seen.distinctBy { it.row to it.col }.count()
-    }
-
-    override fun part2(): Any {
-        TODO("Not yet implemented")
     }
 }
 

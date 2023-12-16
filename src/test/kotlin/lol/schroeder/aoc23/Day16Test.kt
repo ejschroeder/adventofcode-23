@@ -30,5 +30,21 @@ class Day16Test {
 
     @Test
     fun part2() {
+        val input = """
+            .|...\....
+            |.-.\.....
+            .....|-...
+            ........|.
+            ..........
+            .........\
+            ..../.\\..
+            .-.-/..|..
+            .|....-|.\
+            ..//.|....
+        """.trimIndent().lines()
+
+        val result = Day16(input).part2()
+
+        expectThat(result) isEqualTo 51
     }
 }
