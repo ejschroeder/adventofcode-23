@@ -49,11 +49,20 @@ fun lcm(a: Long, b: Long): Long {
 }
 
 operator fun IntRange.contains(other: IntRange) = first <= other.first && last >= other.last
+operator fun LongRange.contains(other: LongRange) = first <= other.first && last >= other.last
 infix fun IntRange.overlaps(other: IntRange) = first <= other.last && last >= other.first
+infix fun LongRange.overlaps(other: LongRange) = first <= other.last && last >= other.first
 fun IntRange.merge(other: IntRange): IntRange? {
     val min = min(this.first, other.first)
     val max = max(this.last, other.last)
     return (min..max).takeIf { overlaps(other) }
+}
+
+fun LongRange.merge(other: LongRange): LongRange {
+    if (!overlaps(other)) throw IllegalArgumentException("Range does not overlap with other")
+    val min = min(this.first, other.first)
+    val max = max(this.last, other.last)
+    return (min..max)
 }
 
 fun String.isUpperCase(): Boolean = this.all { it.isUpperCase() }
